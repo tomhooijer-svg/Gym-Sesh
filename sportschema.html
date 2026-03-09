@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Sportschema</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0f;
+    --surface: #1a1a1c;
+    --surface2: #222225;
+    --accent: #c8f135;
+    --accent2: #7ef0c0;
+    --text: #f0f0ee;
+    --muted: #666;
+    --border: #2e2e32;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    padding: 0 0 60px;
+  }
+
+  header {
+    background: var(--bg);
+    padding: 20px 20px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0;
+  }
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 16px;
+  }
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.6rem;
+    letter-spacing: 2px;
+    line-height: 1;
+  }
+  h1 span { color: var(--accent); }
+  .week-toggle {
+    display: flex;
+    gap: 6px;
+  }
+  .week-btn {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    padding: 6px 16px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .week-btn.active {
+    background: var(--accent);
+    color: #0e0e0f;
+    border-color: var(--accent);
+  }
+  .day-tabs {
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .day-tabs::-webkit-scrollbar { display: none; }
+  .day-tab {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: .95rem;
+    letter-spacing: 1px;
+    padding: 12px 18px;
+    border: none;
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all .2s;
+  }
+  .day-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  main { padding: 0 16px; margin-top: 20px; }
+
+  .day-view { display: none; }
+  .day-view.active { display: block; }
+
+  .day-header {
+    margin-bottom: 20px;
+  }
+  .day-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 2px;
+    line-height: 1.1;
+  }
+  .day-subtitle {
+    color: var(--accent2);
+    font-size: .8rem;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .muscle-block { margin-bottom: 28px; }
+  .muscle-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: .85rem;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    padding-left: 2px;
+  }
+
+  .exercise-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    transition: border-color .2s;
+  }
+  .exercise-card.done {
+    border-color: var(--accent);
+    opacity: .65;
+  }
+  .exercise-top {
+    display: flex;
+    align-items: center;
+    padding: 12px 14px;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .check-circle {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .2s;
+  }
+  .exercise-card.done .check-circle {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .check-circle svg { display: none; }
+  .exercise-card.done .check-circle svg { display: block; }
+
+  .exercise-info { flex: 1; }
+  .exercise-name {
+    font-weight: 600;
+    font-size: .95rem;
+    line-height: 1.2;
+  }
+  .exercise-sets {
+    font-size: .78rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .exercise-expand {
+    color: var(--muted);
+    font-size: 1.2rem;
+    transition: transform .2s;
+  }
+  .exercise-card.open .exercise-expand { transform: rotate(180deg); }
+
+  .exercise-detail {
+    display: none;
+    padding: 0 14px 14px;
+    border-top: 1px solid var(--border);
+  }
+  .exercise-card.open .exercise-detail { display: block; }
+
+  .sets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .set-box {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 8px 6px;
+    text-align: center;
+  }
+  .set-label {
+    font-size: .65rem;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .set-input {
+    width: 100%;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: .9rem;
+    font-weight: 600;
+    text-align: center;
+    outline: none;
+    padding: 2px 0;
+  }
+  .set-input::placeholder { color: var(--border); }
+  .set-input:focus { border-bottom-color: var(--accent); }
+
+  .weight-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .weight-label { font-size: .8rem; color: var(--muted); min-width: 60px; }
+  .weight-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: .95rem;
+    font-weight: 600;
+    padding: 6px 10px;
+    width: 80px;
+    outline: none;
+    text-align: center;
+  }
+  .weight-input:focus { border-color: var(--accent); }
+  .weight-unit { font-size: .8rem; color: var(--muted); }
+
+  .reset-btn {
+    width: 100%;
+    margin-top: 28px;
+    padding: 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: .85rem;
+    cursor: pointer;
+  }
+  .reset-btn:active { background: var(--surface2); }
+
+  .progress-bar-wrap {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-top: 10px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width .4s ease;
+  }
+  .progress-label {
+    font-size: .72rem;
+    color: var(--muted);
+    margin-top: 4px;
+    text-align: right;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <h1>SPORT<span>SCHEMA</span></h1>
+    <div class="week-toggle">
+      <button class="week-btn active" onclick="setWeek('A')">WEEK A</button>
+      <button class="week-btn" onclick="setWeek('B')">WEEK B</button>
+    </div>
+  </div>
+  <div class="day-tabs">
+    <button class="day-tab active" onclick="setDay(0)">RUG & BI</button>
+    <button class="day-tab" onclick="setDay(1)">BORST & TRI</button>
+    <button class="day-tab" id="day3tab" onclick="setDay(2)">SCHOUDERS</button>
+  </div>
+  <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="progress-label" id="progressLabel"></div>
+</header>
+
+<main>
+
+<!-- DAG 1 -->
+<div class="day-view active" id="day0">
+  <div class="day-header">
+    <div class="day-title">RUG & BICEPS</div>
+    <div class="day-subtitle">Dag 1 — alle weken</div>
+  </div>
+  <div class="muscle-block">
+    <div class="muscle-label">— Rug</div>
+    <div id="ex-rug"></div>
+  </div>
+  <div class="muscle-block">
+    <div class="muscle-label">— Biceps</div>
+    <div id="ex-bi"></div>
+  </div>
+  <button class="reset-btn" onclick="resetDay(0)">↺ Reset dag</button>
+</div>
+
+<!-- DAG 2 -->
+<div class="day-view" id="day1">
+  <div class="day-header">
+    <div class="day-title">BORST & TRICEPS</div>
+    <div class="day-subtitle">Dag 2 — alle weken</div>
+  </div>
+  <div class="muscle-block">
+    <div class="muscle-label">— Borst</div>
+    <div id="ex-borst"></div>
+  </div>
+  <div class="muscle-block">
+    <div class="muscle-label">— Triceps</div>
+    <div id="ex-tri"></div>
+  </div>
+  <button class="reset-btn" onclick="resetDay(1)">↺ Reset dag</button>
+</div>
+
+<!-- DAG 3 -->
+<div class="day-view" id="day2">
+  <div class="day-header">
+    <div class="day-title" id="day3title">SCHOUDERS & TRICEPS</div>
+    <div class="day-subtitle" id="day3sub">Dag 3 — Week A</div>
+  </div>
+  <div class="muscle-block">
+    <div class="muscle-label">— Schouders</div>
+    <div id="ex-schouders"></div>
+  </div>
+  <div class="muscle-block">
+    <div class="muscle-label" id="arm-label">— Triceps</div>
+    <div id="ex-arm"></div>
+  </div>
+  <button class="reset-btn" onclick="resetDay(2)">↺ Reset dag</button>
+</div>
+
+</main>
+
+<script>
+const schema = {
+  rug: [
+    { name: "Lat Pulldown", sets: "4×6–10" },
+    { name: "Seated Row Machine", sets: "3×8–12" },
+    { name: "Chest Supported Dumbbell Row", sets: "3×10–12" },
+    { name: "Reverse Pec Deck", sets: "3×12–15" },
+  ],
+  bi: [
+    { name: "Incline Dumbbell Curl", sets: "3×8–12" },
+    { name: "Hammer Curl", sets: "3×10–12" },
+    { name: "Seated Alternating Dumbbell Curl", sets: "2×12–15" },
+  ],
+  borst: [
+    { name: "Chest Press Machine (Flat)", sets: "4×6–10" },
+    { name: "Incline Dumbbell Press", sets: "3×8–12" },
+    { name: "Decline Chest Press Machine", sets: "2×8–12" },
+    { name: "Pec Deck / Chest Fly Machine", sets: "3×12–15" },
+  ],
+  tri: [
+    { name: "Cable Triceps Pushdown (Rope)", sets: "3×8–12" },
+    { name: "Overhead Cable Triceps Extension (Rope)", sets: "3×10–15" },
+    { name: "Cable Triceps Pushdown (V-bar)", sets: "2×12–15" },
+  ],
+  schoudersA: [
+    { name: "Shoulder Press Machine", sets: "4×6–10" },
+    { name: "Dumbbell Lateral Raise", sets: "4×12–15" },
+    { name: "Reverse Pec Deck", sets: "3×12–15" },
+    { name: "Rear Delt Dumbbell Raise", sets: "3×12–15" },
+  ],
+  triA: [
+    { name: "Cable Triceps Pushdown (Rope)", sets: "3×10–12" },
+    { name: "Single Arm Overhead Cable Extension", sets: "2×12–15" },
+  ],
+  schoudersB: [
+    { name: "Seated Dumbbell Shoulder Press", sets: "4×6–10" },
+    { name: "Arnold Press", sets: "3×8–12" },
+    { name: "Dumbbell Lateral Raise", sets: "4×12–15" },
+    { name: "Rear Delt Dumbbell Raise", sets: "3×12–15" },
+  ],
+  biB: [
+    { name: "Spider Curl (Dumbbells)", sets: "3×8–12" },
+    { name: "Cross Body Hammer Curl", sets: "3×10–12" },
+    { name: "Concentration Curl", sets: "2×12–15" },
+  ],
+};
+
+let currentWeek = 'A';
+let currentDay = 0;
+let state = JSON.parse(localStorage.getItem('gymstate') || '{}');
+
+function saveState() {
+  try { localStorage.setItem('gymstate', JSON.stringify(state)); } catch(e) {}
+}
+
+function getNumSets(setsStr) {
+  const m = setsStr.match(/^(\d)/);
+  return m ? parseInt(m[1]) : 3;
+}
+
+function renderExercises(containerId, exercises, prefix) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  exercises.forEach((ex, i) => {
+    const key = `${prefix}-${i}`;
+    const exState = state[key] || {};
+    const done = !!exState.done;
+    const weight = exState.weight || '';
+    const numSets = getNumSets(ex.sets);
+
+    const card = document.createElement('div');
+    card.className = 'exercise-card' + (done ? ' done' : '');
+    card.dataset.key = key;
+
+    let setsHtml = '';
+    for (let s = 0; s < numSets; s++) {
+      const reps = (exState.reps && exState.reps[s]) || '';
+      setsHtml += `
+        <div class="set-box">
+          <div class="set-label">Set ${s+1}</div>
+          <input class="set-input" type="number" inputmode="numeric" placeholder="reps"
+            value="${reps}" onchange="saveReps('${key}', ${s}, this.value)">
+        </div>`;
+    }
+
+    card.innerHTML = `
+      <div class="exercise-top" onclick="toggleCard(this)">
+        <div class="check-circle" onclick="toggleDone(event,'${key}')">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M2 6l3 3 5-5" stroke="#0e0e0f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="exercise-info">
+          <div class="exercise-name">${ex.name}</div>
+          <div class="exercise-sets">${ex.sets}</div>
+        </div>
+        <div class="exercise-expand">⌄</div>
+      </div>
+      <div class="exercise-detail">
+        <div class="weight-row">
+          <span class="weight-label">Gewicht</span>
+          <input class="weight-input" type="number" inputmode="decimal" placeholder="0"
+            value="${weight}" onchange="saveWeight('${key}', this.value)">
+          <span class="weight-unit">kg</span>
+        </div>
+        <div class="sets-grid">${setsHtml}</div>
+      </div>`;
+    container.appendChild(card);
+  });
+  updateProgress();
+}
+
+function toggleCard(el) {
+  const card = el.closest('.exercise-card');
+  card.classList.toggle('open');
+}
+
+function toggleDone(e, key) {
+  e.stopPropagation();
+  if (!state[key]) state[key] = {};
+  state[key].done = !state[key].done;
+  saveState();
+  renderAll();
+}
+
+function saveWeight(key, val) {
+  if (!state[key]) state[key] = {};
+  state[key].weight = val;
+  saveState();
+}
+
+function saveReps(key, setIdx, val) {
+  if (!state[key]) state[key] = {};
+  if (!state[key].reps) state[key].reps = {};
+  state[key].reps[setIdx] = val;
+  saveState();
+}
+
+function renderAll() {
+  const w = currentWeek;
+  renderExercises('ex-rug', schema.rug, 'rug');
+  renderExercises('ex-bi', schema.bi, 'bi');
+  renderExercises('ex-borst', schema.borst, 'borst');
+  renderExercises('ex-tri', schema.tri, 'tri');
+  if (w === 'A') {
+    renderExercises('ex-schouders', schema.schoudersA, `schouA`);
+    renderExercises('ex-arm', schema.triA, `triA`);
+    document.getElementById('day3title').textContent = 'SCHOUDERS & TRICEPS';
+    document.getElementById('day3sub').textContent = 'Dag 3 — Week A';
+    document.getElementById('arm-label').textContent = '— Triceps';
+    document.getElementById('day3tab').textContent = 'SCHOUDERS';
+  } else {
+    renderExercises('ex-schouders', schema.schoudersB, `schouB`);
+    renderExercises('ex-arm', schema.biB, `biB`);
+    document.getElementById('day3title').textContent = 'SCHOUDERS & BICEPS';
+    document.getElementById('day3sub').textContent = 'Dag 3 — Week B';
+    document.getElementById('arm-label').textContent = '— Biceps';
+    document.getElementById('day3tab').textContent = 'SCHOUDERS';
+  }
+  updateProgress();
+}
+
+function updateProgress() {
+  const dayPrefixes = [
+    ['rug', 'bi'],
+    ['borst', 'tri'],
+    currentWeek === 'A' ? ['schouA', 'triA'] : ['schouB', 'biB']
+  ];
+  const prefixes = dayPrefixes[currentDay];
+  const daySchemas = [
+    [schema.rug, schema.bi],
+    [schema.borst, schema.tri],
+    currentWeek === 'A' ? [schema.schoudersA, schema.triA] : [schema.schoudersB, schema.biB]
+  ];
+  let total = 0, done = 0;
+  prefixes.forEach((p, pi) => {
+    const exs = daySchemas[currentDay][pi];
+    exs.forEach((_, i) => {
+      total++;
+      if (state[`${p}-${i}`]?.done) done++;
+    });
+  });
+  const pct = total ? Math.round(done/total*100) : 0;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = done > 0 ? `${done}/${total} oefeningen klaar` : '';
+}
+
+function setWeek(w) {
+  currentWeek = w;
+  document.querySelectorAll('.week-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.week-btn')[w === 'A' ? 0 : 1].classList.add('active');
+  renderAll();
+}
+
+function setDay(d) {
+  currentDay = d;
+  document.querySelectorAll('.day-view').forEach((v,i) => v.classList.toggle('active', i===d));
+  document.querySelectorAll('.day-tab').forEach((t,i) => t.classList.toggle('active', i===d));
+  updateProgress();
+}
+
+function resetDay(d) {
+  const dayPrefixes = [
+    ['rug', 'bi'],
+    ['borst', 'tri'],
+    ['schouA', 'triA', 'schouB', 'biB']
+  ];
+  dayPrefixes[d].forEach(p => {
+    Object.keys(state).filter(k => k.startsWith(p+'-')).forEach(k => delete state[k]);
+  });
+  saveState();
+  renderAll();
+}
+
+renderAll();
+</script>
+</body>
+</html>
